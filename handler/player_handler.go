@@ -21,13 +21,14 @@ type Player struct {
 }
 
 type Application struct {
-	db d.DbWrapper
+	Db d.DbWrapper
 }
 
 func (a Application) New(database d.DbWrapper) Application {
-	a.db = database
-	return a
+	return Application{database}
 }
+
+var ctx, _ = context.WithTimeout(context.Background(), 30*time.Second)
 
 func (a Application) CreatePlayer(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
@@ -39,8 +40,7 @@ func (a Application) CreatePlayer(response http.ResponseWriter, request *http.Re
 		return
 	}
 
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	result, err := a.db.Collection.InsertOne(ctx, person)
+	result, err := a.Db.Collection.InsertOne(ctx, person)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -49,25 +49,25 @@ func (a Application) CreatePlayer(response http.ResponseWriter, request *http.Re
 
 func (a Application) GetPlayers(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
-	var persons []Player
-	cursor, err := a.db.Collection.Find(a.db.Ctx, bson.M{})
+	var players []Player
+	cursor, err := a.Db.Collection.Find(ctx, bson.M{})
 	if err != nil {
 		response.WriteHeader(http.StatusUnprocessableEntity)
 		response.Write([]byte(`{"message":"` + err.Error() + `"}`))
 		return
 	}
-	defer cursor.Close(a.db.Ctx)
-	for cursor.Next(a.db.Ctx) {
+	defer cursor.Close(ctx)
+	for cursor.Next(ctx) {
 		var person Player
 		cursor.Decode(&person)
-		persons = append(persons, person)
+		players = append(players, person)
 	}
 	if err := cursor.Err(); err != nil {
 		response.WriteHeader(http.StatusUnprocessableEntity)
 		response.Write([]byte(`{"message":"` + err.Error() + `"}`))
 		return
 	}
-	json.NewEncoder(response).Encode(persons)
+	json.NewEncoder(response).Encode(players)
 }
 
 func (a Application) GetPlayerById(response http.ResponseWriter, request *http.Request) {
@@ -75,7 +75,7 @@ func (a Application) GetPlayerById(response http.ResponseWriter, request *http.R
 	params := mux.Vars(request)
 	id, _ := primitive.ObjectIDFromHex(params["id"])
 	var person Player
-	err := a.db.Collection.FindOne(a.db.Ctx, bson.M{"_id": id}).Decode(&person)
+	err := a.Db.Collection.FindOne(ctx, bson.M{"_id": id}).Decode(&person)
 
 	if err != nil {
 		response.WriteHeader(http.StatusUnprocessableEntity)

@@ -28,10 +28,10 @@ func (a Application) New(database d.DbWrapper) Application {
 	return Application{database}
 }
 
-var ctx, _ = context.WithTimeout(context.Background(), 30*time.Second)
-
 func (a Application) CreatePlayer(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
+	ctx, _ := context.WithTimeout(context.Background(), 15*time.Second)
+
 	var person Player
 	json.NewDecoder(request.Body).Decode(&person)
 	if person.Name == "" {
@@ -49,6 +49,8 @@ func (a Application) CreatePlayer(response http.ResponseWriter, request *http.Re
 
 func (a Application) GetPlayers(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
+	ctx, _ := context.WithTimeout(context.Background(), 15*time.Second)
+
 	var players []Player
 	cursor, err := a.Db.Collection.Find(ctx, bson.M{})
 	if err != nil {
@@ -72,6 +74,8 @@ func (a Application) GetPlayers(response http.ResponseWriter, request *http.Requ
 
 func (a Application) GetPlayerById(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
+	ctx, _ := context.WithTimeout(context.Background(), 15*time.Second)
+
 	params := mux.Vars(request)
 	id, _ := primitive.ObjectIDFromHex(params["id"])
 	var person Player

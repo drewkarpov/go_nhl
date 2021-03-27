@@ -1,0 +1,29 @@
+version: '3.2'
+
+networks:
+  app_network:
+    driver: bridge
+
+services:
+  mongo:
+    image: mongo:latest
+    volumes:
+      - /root/data-container/mongodb/db:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PWD}
+    ports:
+      - '27017:27017'
+
+  application:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      MONGODB_USER: ${MONGODB_USER}
+      MONGODB_PWD: ${MONGODB_PWD}
+    depends_on:
+      - 'mongo'
+    ports:
+      - 2222:2222
+

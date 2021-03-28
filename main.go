@@ -23,6 +23,7 @@ func main() {
 	router.HandleFunc("/player/{id}", application.GetPlayerById).Methods("GET")
 	router.HandleFunc("/player/{id}/change", application.ChangePlayerById).Methods("PUT")
 	router.HandleFunc("/player/{id}/delete", application.DeletePlayer).Methods("DELETE")
+	router.HandleFunc("/players/statistic", application.GetStatistic).Methods("GET")
 	fmt.Println("Application is started and listen port 2222")
 	http.ListenAndServe(":2222", router)
 }

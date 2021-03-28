@@ -3,7 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	d "github.com/drewkarpov/go_nhl/mongo"
+	"github.com/drewkarpov/go_nhl/app"
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -11,6 +11,14 @@ import (
 	"net/http"
 	"time"
 )
+
+type PlayerHandler struct {
+	application app.Application
+}
+
+func (h PlayerHandler) New(app app.Application) PlayerHandler {
+	return PlayerHandler{app}
+}
 
 type Player struct {
 	ID       primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
@@ -20,15 +28,7 @@ type Player struct {
 	Comment  string             `json:"comment,omitempty" bson:"comment,omitempty"`
 }
 
-type Application struct {
-	Db d.DbWrapper
-}
-
-func (a Application) New(database d.DbWrapper) Application {
-	return Application{database}
-}
-
-func (a Application) CreatePlayer(response http.ResponseWriter, request *http.Request) {
+func (handler PlayerHandler) CreatePlayer(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 	ctx, _ := context.WithTimeout(context.Background(), 15*time.Second)
 
@@ -39,19 +39,19 @@ func (a Application) CreatePlayer(response http.ResponseWriter, request *http.Re
 		return
 	}
 
-	result, err := a.Db.Collection.InsertOne(ctx, player)
+	result, err := handler.application.Db.Collection.InsertOne(ctx, player)
 	if err != nil {
 		log.Fatal(err)
 	}
 	json.NewEncoder(response).Encode(result)
 }
 
-func (a Application) GetPlayers(response http.ResponseWriter, request *http.Request) {
+func (handler PlayerHandler) GetPlayers(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 	ctx, _ := context.WithTimeout(context.Background(), 15*time.Second)
 
 	var players []Player
-	cursor, err := a.Db.Collection.Find(ctx, bson.M{})
+	cursor, err := handler.application.Db.Collection.Find(ctx, bson.M{})
 	if err != nil {
 		writeErrorToResponse(response, err)
 		return
@@ -69,7 +69,7 @@ func (a Application) GetPlayers(response http.ResponseWriter, request *http.Requ
 	json.NewEncoder(response).Encode(players)
 }
 
-func (a Application) GetPlayerById(response http.ResponseWriter, request *http.Request) {
+func (handler PlayerHandler) GetPlayerById(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 	ctx, _ := context.WithTimeout(context.Background(), 15*time.Second)
 
@@ -77,7 +77,7 @@ func (a Application) GetPlayerById(response http.ResponseWriter, request *http.R
 	id, _ := primitive.ObjectIDFromHex(params["id"])
 	var person Player
 
-	err := a.Db.Collection.FindOne(ctx, bson.M{"_id": id}).Decode(&person)
+	err := handler.application.Db.Collection.FindOne(ctx, bson.M{"_id": id}).Decode(&person)
 
 	if err != nil {
 		writeErrorToResponse(response, err)
@@ -87,7 +87,7 @@ func (a Application) GetPlayerById(response http.ResponseWriter, request *http.R
 
 }
 
-func (a Application) ChangePlayerById(response http.ResponseWriter, request *http.Request) {
+func (handler PlayerHandler) ChangePlayerById(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 	ctx, _ := context.WithTimeout(context.Background(), 15*time.Second)
 
@@ -96,7 +96,7 @@ func (a Application) ChangePlayerById(response http.ResponseWriter, request *htt
 	var player Player
 	json.NewDecoder(request.Body).Decode(&player)
 
-	_, err := a.Db.Collection.UpdateOne(
+	_, err := handler.application.Db.Collection.UpdateOne(
 		ctx,
 		bson.M{"_id": id},
 		bson.D{
@@ -114,13 +114,13 @@ func (a Application) ChangePlayerById(response http.ResponseWriter, request *htt
 
 }
 
-func (a Application) DeletePlayer(response http.ResponseWriter, request *http.Request) {
+func (handler PlayerHandler) DeletePlayer(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 	ctx, _ := context.WithTimeout(context.Background(), 15*time.Second)
 
 	params := mux.Vars(request)
 	id, _ := primitive.ObjectIDFromHex(params["id"])
-	result, err := a.Db.Collection.DeleteOne(ctx, bson.M{"_id": id})
+	result, err := handler.application.Db.Collection.DeleteOne(ctx, bson.M{"_id": id})
 
 	if err != nil {
 		writeErrorToResponse(response, err)

@@ -3,10 +3,19 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	app "github.com/drewkarpov/go_nhl/app"
 	"go.mongodb.org/mongo-driver/bson"
 	"net/http"
 	"time"
 )
+
+type StatisticHandler struct {
+	application app.Application
+}
+
+func (h StatisticHandler) New(app app.Application) StatisticHandler {
+	return StatisticHandler{app}
+}
 
 type Statistic struct {
 	Zero   int64 `json:"zero,omitempty" bson:"zero,omitempty"`
@@ -15,12 +24,11 @@ type Statistic struct {
 	Driver int64 `json:"driver,omitempty" bson:"driver,omitempty"`
 }
 
-func (a Application) GetStatistic(response http.ResponseWriter, request *http.Request) {
+func (handler StatisticHandler) GetStatistic(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 	ctx, _ := context.WithTimeout(context.Background(), 15*time.Second)
-
 	var statistic = Statistic{0, 0, 0, 0}
-	cursor, err := a.Db.Collection.Find(ctx, bson.M{})
+	cursor, err := handler.application.Db.Collection.Find(ctx, bson.M{})
 	if err != nil {
 		writeErrorToResponse(response, err)
 		return

@@ -9,14 +9,15 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
 	"net/http"
+	"sort"
 	"time"
 )
 
 type PlayerHandler struct {
-	application app.Application
+	application *app.Application
 }
 
-func (h PlayerHandler) New(app app.Application) PlayerHandler {
+func (h *PlayerHandler) New(app *app.Application) PlayerHandler {
 	return PlayerHandler{app}
 }
 
@@ -26,6 +27,7 @@ type Player struct {
 	Status   string             `json:"status,omitempty" bson:"status,omitempty"`
 	Priority int                `json:"priority,omitempty" priority:"status,omitempty"`
 	Comment  string             `json:"comment,omitempty" bson:"comment,omitempty"`
+	Date     int64              `json:"date" bson:"date"`
 }
 
 func (handler PlayerHandler) CreatePlayer(response http.ResponseWriter, request *http.Request) {
@@ -39,11 +41,14 @@ func (handler PlayerHandler) CreatePlayer(response http.ResponseWriter, request 
 		return
 	}
 
+	player.Date = time.Now().Unix()
+
 	result, err := handler.application.Db.Collection.InsertOne(ctx, player)
 	if err != nil {
 		log.Fatal(err)
 	}
 	json.NewEncoder(response).Encode(result)
+	handler.application.Logger.Infof("get response %v", request.RequestURI)
 }
 
 func (handler PlayerHandler) GetPlayers(response http.ResponseWriter, request *http.Request) {
@@ -66,7 +71,10 @@ func (handler PlayerHandler) GetPlayers(response http.ResponseWriter, request *h
 		writeErrorToResponse(response, err)
 		return
 	}
+	sort.Slice(players, func(i, j int) bool { return players[i].Date > players[j].Date })
+
 	json.NewEncoder(response).Encode(players)
+	handler.application.Logger.Infof("get response %v", request.RequestURI)
 }
 
 func (handler PlayerHandler) GetPlayerById(response http.ResponseWriter, request *http.Request) {
@@ -84,7 +92,7 @@ func (handler PlayerHandler) GetPlayerById(response http.ResponseWriter, request
 		return
 	}
 	json.NewEncoder(response).Encode(&person)
-
+	handler.application.Logger.Infof("get response %v", request.RequestURI)
 }
 
 func (handler PlayerHandler) ChangePlayerById(response http.ResponseWriter, request *http.Request) {
@@ -111,7 +119,7 @@ func (handler PlayerHandler) ChangePlayerById(response http.ResponseWriter, requ
 		return
 	}
 	json.NewEncoder(response).Encode(&player)
-
+	handler.application.Logger.Infof("get response %v", request.RequestURI)
 }
 
 func (handler PlayerHandler) DeletePlayer(response http.ResponseWriter, request *http.Request) {
@@ -123,14 +131,20 @@ func (handler PlayerHandler) DeletePlayer(response http.ResponseWriter, request 
 	result, err := handler.application.Db.Collection.DeleteOne(ctx, bson.M{"_id": id})
 
 	if err != nil {
-		writeErrorToResponse(response, err)
+		statusCode := writeErrorToResponse(response, err)
+		handler.LoggingRequest(*request, statusCode)
 		return
 	}
 	json.NewEncoder(response).Encode(result)
+	handler.LoggingRequest(*request, 200)
 }
 
-func writeErrorToResponse(response http.ResponseWriter, err error) {
-	log.Println(err)
+func writeErrorToResponse(response http.ResponseWriter, err error) int {
 	response.WriteHeader(http.StatusUnprocessableEntity)
 	response.Write([]byte(`{"message":"` + err.Error() + `"}`))
+	return http.StatusUnprocessableEntity
+}
+
+func (h *PlayerHandler) LoggingRequest(request http.Request, statusCode int) {
+	h.application.Logger.Infof("method:%v path:%v code:%v", request.Method, request.RequestURI, statusCode)
 }

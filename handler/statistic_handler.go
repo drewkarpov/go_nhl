@@ -10,24 +10,25 @@ import (
 )
 
 type StatisticHandler struct {
-	application app.Application
+	application *app.Application
 }
 
-func (h StatisticHandler) New(app app.Application) StatisticHandler {
+func (h *StatisticHandler) New(app *app.Application) StatisticHandler {
 	return StatisticHandler{app}
 }
 
 type Statistic struct {
-	Zero   int64 `json:"zero,omitempty" bson:"zero,omitempty"`
-	Low    int64 `json:"low,omitempty" bson:"low,omitempty"`
-	Hard   int64 `json:"hard,omitempty" bson:"hard,omitempty"`
-	Driver int64 `json:"driver,omitempty" bson:"driver,omitempty"`
+	Zero   int64 `json:"zero" bson:"zero"`
+	Low    int64 `json:"low" bson:"low"`
+	Hard   int64 `json:"hard" bson:"hard"`
+	Driver int64 `json:"driver" bson:"driver"`
+	Total  int64 `json:"total" bson:"total"`
 }
 
-func (handler StatisticHandler) GetStatistic(response http.ResponseWriter, request *http.Request) {
+func (handler *StatisticHandler) GetStatistic(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 	ctx, _ := context.WithTimeout(context.Background(), 15*time.Second)
-	var statistic = Statistic{0, 0, 0, 0}
+	var statistic = Statistic{0, 0, 0, 0, 0}
 	cursor, err := handler.application.Db.Collection.Find(ctx, bson.M{})
 	if err != nil {
 		writeErrorToResponse(response, err)
@@ -37,6 +38,7 @@ func (handler StatisticHandler) GetStatistic(response http.ResponseWriter, reque
 	for cursor.Next(ctx) {
 		var player Player
 		cursor.Decode(&player)
+		statistic.Total++
 		switch player.Status {
 		case "zero":
 			statistic.Zero++
@@ -53,4 +55,9 @@ func (handler StatisticHandler) GetStatistic(response http.ResponseWriter, reque
 		return
 	}
 	json.NewEncoder(response).Encode(statistic)
+	handler.LoggingRequest(*request, 200)
+}
+
+func (h *StatisticHandler) LoggingRequest(request http.Request, statusCode int) {
+	h.application.Logger.Infof("method:%v path:%v code:%v", request.Method, request.RequestURI, statusCode)
 }

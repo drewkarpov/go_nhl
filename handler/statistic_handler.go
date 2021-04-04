@@ -10,11 +10,7 @@ import (
 )
 
 type StatisticHandler struct {
-	application *app.Application
-}
-
-func (h *StatisticHandler) New(app *app.Application) StatisticHandler {
-	return StatisticHandler{app}
+	Application *app.Application
 }
 
 type Statistic struct {
@@ -29,7 +25,7 @@ func (handler *StatisticHandler) GetStatistic(response http.ResponseWriter, requ
 	response.Header().Add("content-type", "application/json")
 	ctx, _ := context.WithTimeout(context.Background(), 15*time.Second)
 	var statistic = Statistic{0, 0, 0, 0, 0}
-	cursor, err := handler.application.Db.Collection.Find(ctx, bson.M{})
+	cursor, err := handler.Application.Db.Collection.Find(ctx, bson.M{})
 	if err != nil {
 		writeErrorToResponse(response, err)
 		return
@@ -59,5 +55,5 @@ func (handler *StatisticHandler) GetStatistic(response http.ResponseWriter, requ
 }
 
 func (h *StatisticHandler) LoggingRequest(request http.Request, statusCode int) {
-	h.application.Logger.Infof("method:%v path:%v code:%v", request.Method, request.RequestURI, statusCode)
+	h.Application.Logger.Infof("method:%v path:%v code:%v", request.Method, request.RequestURI, statusCode)
 }

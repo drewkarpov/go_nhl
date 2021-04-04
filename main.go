@@ -17,10 +17,8 @@ func main() {
 	var db d.DbWrapper
 	db = db.Init()
 
-	var statHandler h.StatisticHandler
-	var playerHandler h.PlayerHandler
-	statHandler = statHandler.New(&application)
-	playerHandler = playerHandler.New(&application)
+	statHandler := h.StatisticHandler{Application: &application}
+	playerHandler := h.PlayerHandler{Application: &application}
 
 	router := mux.NewRouter()
 	router.HandleFunc("/add/player", playerHandler.CreatePlayer).Methods("POST")

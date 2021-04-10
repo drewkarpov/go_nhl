@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	app "github.com/drewkarpov/go_nhl/app"
+	m "github.com/drewkarpov/go_nhl/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"net/http"
 	"time"
@@ -13,18 +14,10 @@ type StatisticHandler struct {
 	Application *app.Application
 }
 
-type Statistic struct {
-	Zero   int64 `json:"zero" bson:"zero"`
-	Low    int64 `json:"low" bson:"low"`
-	Hard   int64 `json:"hard" bson:"hard"`
-	Driver int64 `json:"driver" bson:"driver"`
-	Total  int64 `json:"total" bson:"total"`
-}
-
 func (handler *StatisticHandler) GetStatistic(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 	ctx, _ := context.WithTimeout(context.Background(), 15*time.Second)
-	var statistic = Statistic{0, 0, 0, 0, 0}
+	var statistic = m.Statistic{0, 0, 0, 0, 0}
 	cursor, err := handler.Application.Db.Collection.Find(ctx, bson.M{})
 	if err != nil {
 		writeErrorToResponse(response, err)
@@ -32,7 +25,7 @@ func (handler *StatisticHandler) GetStatistic(response http.ResponseWriter, requ
 	}
 	defer cursor.Close(ctx)
 	for cursor.Next(ctx) {
-		var player Player
+		var player m.Player
 		cursor.Decode(&player)
 		statistic.Total++
 		switch player.Status {

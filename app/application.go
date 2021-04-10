@@ -1,7 +1,7 @@
 package app
 
 import (
-	d "github.com/drewkarpov/go_nhl/mongo"
+	d "github.com/drewkarpov/go_nhl/internal/mongo"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"net/http"

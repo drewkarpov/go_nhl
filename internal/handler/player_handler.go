@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/drewkarpov/go_nhl/app"
+	m "github.com/drewkarpov/go_nhl/internal/models"
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -17,20 +18,11 @@ type PlayerHandler struct {
 	Application *app.Application
 }
 
-type Player struct {
-	ID       primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	Name     string             `json:"name,omitempty" bson:"name,omitempty"`
-	Status   string             `json:"status,omitempty" bson:"status,omitempty"`
-	Priority int                `json:"priority,omitempty" priority:"status,omitempty"`
-	Comment  string             `json:"comment,omitempty" bson:"comment,omitempty"`
-	Date     int64              `json:"date" bson:"date"`
-}
-
 func (handler PlayerHandler) CreatePlayer(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 	ctx, _ := context.WithTimeout(context.Background(), 15*time.Second)
 
-	var player Player
+	var player m.Player
 	json.NewDecoder(request.Body).Decode(&player)
 	if player.Name == "" {
 		writeErrorToResponse(response, nil)
@@ -51,7 +43,7 @@ func (handler PlayerHandler) GetPlayers(response http.ResponseWriter, request *h
 	response.Header().Add("content-type", "application/json")
 	ctx, _ := context.WithTimeout(context.Background(), 15*time.Second)
 
-	var players []Player
+	var players []m.Player
 	cursor, err := handler.Application.Db.Collection.Find(ctx, bson.M{})
 	if err != nil {
 		writeErrorToResponse(response, err)
@@ -59,7 +51,7 @@ func (handler PlayerHandler) GetPlayers(response http.ResponseWriter, request *h
 	}
 	defer cursor.Close(ctx)
 	for cursor.Next(ctx) {
-		var person Player
+		var person m.Player
 		cursor.Decode(&person)
 		players = append(players, person)
 	}
@@ -79,7 +71,7 @@ func (handler PlayerHandler) GetPlayerById(response http.ResponseWriter, request
 
 	params := mux.Vars(request)
 	id, _ := primitive.ObjectIDFromHex(params["id"])
-	var person Player
+	var person m.Player
 
 	err := handler.Application.Db.Collection.FindOne(ctx, bson.M{"_id": id}).Decode(&person)
 
@@ -97,7 +89,7 @@ func (handler PlayerHandler) ChangePlayerById(response http.ResponseWriter, requ
 
 	params := mux.Vars(request)
 	id, _ := primitive.ObjectIDFromHex(params["id"])
-	var player Player
+	var player m.Player
 	json.NewDecoder(request.Body).Decode(&player)
 
 	_, err := handler.Application.Db.Collection.UpdateOne(
@@ -133,6 +125,35 @@ func (handler PlayerHandler) DeletePlayer(response http.ResponseWriter, request 
 	}
 	json.NewEncoder(response).Encode(result)
 	handler.LoggingRequest(*request, 200)
+}
+
+func (handler PlayerHandler) AddGameToPlayer(response http.ResponseWriter, request *http.Request) {
+	response.Header().Add("content-type", "application/json")
+	ctx, _ := context.WithTimeout(context.Background(), 15*time.Second)
+
+	params := mux.Vars(request)
+	id, _ := primitive.ObjectIDFromHex(params["id"])
+
+	var game m.Game
+	decodeError := json.NewDecoder(request.Body).Decode(&game)
+	if decodeError != nil {
+		writeErrorToResponse(response, decodeError)
+	}
+
+	game.ID = primitive.NewObjectID()
+
+	_, err := handler.Application.Db.Collection.UpdateOne(
+		ctx,
+		bson.M{"_id": id},
+		bson.M{"$push": bson.M{"games": game}},
+	)
+
+	if err != nil {
+		writeErrorToResponse(response, err)
+		return
+	}
+	json.NewEncoder(response).Encode(&game)
+	handler.Application.Logger.Infof("get response %v", request.RequestURI)
 }
 
 func writeErrorToResponse(response http.ResponseWriter, err error) int {

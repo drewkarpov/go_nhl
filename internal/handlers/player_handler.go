@@ -15,6 +15,10 @@ type PlayerHandler struct {
 	Application *app.Application
 }
 
+type Result struct {
+	Result string `json:"result" bson:"result"`
+}
+
 func (handler PlayerHandler) CreatePlayer(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 
@@ -86,7 +90,7 @@ func (handler PlayerHandler) DeletePlayer(response http.ResponseWriter, request 
 		handler.LoggingRequest(*request, statusCode)
 		return
 	}
-	json.NewEncoder(response).Encode(resultStatus)
+	json.NewEncoder(response).Encode(Result{resultStatus})
 	handler.LoggingRequest(*request, 200)
 }
 

@@ -20,7 +20,7 @@ func (d MongoPlayerService) Init() MongoPlayerService {
 	ctx, _ := context.WithTimeout(context.Background(), 40*time.Second)
 	var cred options.Credential = options.Credential{Username: os.Getenv("MONGODB_USER"),
 		Password: os.Getenv("MONGODB_PWD")}
-	client, _ := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://mongo:27017").SetAuth(cred))
+	client, _ := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://"+os.Getenv("MONGODB_HOST")+":27017").SetAuth(cred))
 	d.Collection = client.Database("nhl").Collection("players")
 	return MongoPlayerService{Collection: d.Collection}
 }
@@ -80,11 +80,16 @@ func (d MongoPlayerService) GetPlayerById(id primitive.ObjectID) (m.Player, erro
 
 func (d MongoPlayerService) DeletePlayer(id primitive.ObjectID) (string, error) {
 	ctx, _ := context.WithTimeout(context.Background(), 15*time.Second)
-	_, err := d.Collection.DeleteOne(ctx, bson.M{"_id": id})
+	result, err := d.Collection.DeleteOne(ctx, bson.M{"_id": id})
 	if err != nil {
 		return "failure", err
 	}
-	return "success", err
+	switch result.DeletedCount {
+	case 1:
+		return "success", err
+	default:
+		return "failure", err
+	}
 }
 
 func (d MongoPlayerService) AddGameToPlayer(id primitive.ObjectID, game m.Game) (m.Game, error) {

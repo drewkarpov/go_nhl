@@ -94,7 +94,7 @@ func (d MongoPlayerService) AddGameToPlayer(id primitive.ObjectID, game m.Game) 
 	_, err := d.Collection.UpdateOne(
 		ctx,
 		bson.M{"_id": id},
-		bson.M{"$addToSet": bson.M{"games": game}},
+		bson.M{"$push": bson.M{"games": game}},
 	)
 	return game, err
 }

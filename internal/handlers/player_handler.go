@@ -101,7 +101,7 @@ func (handler PlayerHandler) AddGameToPlayer(response http.ResponseWriter, reque
 	if decodeError != nil {
 		writeErrorToResponse(response, decodeError)
 	}
-
+	game.Timestamp = time.Now().Unix()
 	game, err := handler.Application.PlayerService.AddGameToPlayer(id, game)
 
 	if err != nil {

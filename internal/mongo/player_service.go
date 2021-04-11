@@ -28,6 +28,7 @@ func (d MongoPlayerService) Init() MongoPlayerService {
 func (d MongoPlayerService) WritePlayer(playerDTO m.PlayerDTO) *mongo.InsertOneResult {
 	player := playerDTO.MapToPlayer()
 	player.ID = primitive.NewObjectID()
+	player.Games = []m.Game{}
 	ctx, _ := context.WithTimeout(context.Background(), 15*time.Second)
 	result, err := d.Collection.InsertOne(ctx, player)
 	if err != nil {
@@ -93,7 +94,7 @@ func (d MongoPlayerService) AddGameToPlayer(id primitive.ObjectID, game m.Game) 
 	_, err := d.Collection.UpdateOne(
 		ctx,
 		bson.M{"_id": id},
-		bson.M{"$push": bson.M{"games": game}},
+		bson.M{"$addToSet": bson.M{"games": game}},
 	)
 	return game, err
 }

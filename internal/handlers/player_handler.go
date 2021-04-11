@@ -1,4 +1,4 @@
-package handler
+package handlers
 
 import (
 	"encoding/json"
@@ -109,6 +109,22 @@ func (handler PlayerHandler) AddGameToPlayer(response http.ResponseWriter, reque
 		return
 	}
 	json.NewEncoder(response).Encode(&game)
+	handler.Application.Logger.Infof("get response %v", request.RequestURI)
+}
+
+func (handler PlayerHandler) GetPlayerGames(response http.ResponseWriter, request *http.Request) {
+	response.Header().Add("content-type", "application/json")
+
+	params := mux.Vars(request)
+	id, _ := primitive.ObjectIDFromHex(params["id"])
+
+	games, err := handler.Application.PlayerService.GetPlayerGames(id)
+
+	if err != nil {
+		writeErrorToResponse(response, err)
+		return
+	}
+	json.NewEncoder(response).Encode(&games)
 	handler.Application.Logger.Infof("get response %v", request.RequestURI)
 }
 

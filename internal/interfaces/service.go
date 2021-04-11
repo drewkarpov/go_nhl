@@ -13,4 +13,5 @@ type PlayerService interface {
 	DeletePlayer(id primitive.ObjectID) (string, error)
 	GetPlayerById(id primitive.ObjectID) (m.Player, error)
 	AddGameToPlayer(id primitive.ObjectID, game m.Game) (m.Game, error)
+	GetPlayerGames(id primitive.ObjectID) ([]m.Game, error)
 }

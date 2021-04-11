@@ -2,7 +2,7 @@ package main
 
 import (
 	a "github.com/drewkarpov/go_nhl/internal/app"
-	h "github.com/drewkarpov/go_nhl/internal/handler"
+	h "github.com/drewkarpov/go_nhl/internal/handlers"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"os"
@@ -20,6 +20,7 @@ func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/add/player", playerHandler.CreatePlayer).Methods("POST")
 	router.HandleFunc("/player/{id}/game/add", playerHandler.AddGameToPlayer).Methods("POST")
+	router.HandleFunc("/player/{id}/games", playerHandler.AddGameToPlayer).Methods("GET")
 	router.HandleFunc("/players", playerHandler.GetPlayers).Methods("GET")
 	router.HandleFunc("/player/{id}", playerHandler.GetPlayerById).Methods("GET")
 	router.HandleFunc("/player/{id}/change", playerHandler.ChangePlayerById).Methods("PUT")

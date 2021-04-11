@@ -97,3 +97,8 @@ func (d MongoPlayerService) AddGameToPlayer(id primitive.ObjectID, game m.Game) 
 	)
 	return game, err
 }
+
+func (d MongoPlayerService) GetPlayerGames(id primitive.ObjectID) ([]m.Game, error) {
+	player, err := d.GetPlayerById(id)
+	return player.Games, err
+}

@@ -1,13 +1,10 @@
 package handler
 
 import (
-	"context"
 	"encoding/json"
-	app "github.com/drewkarpov/go_nhl/app"
+	app "github.com/drewkarpov/go_nhl/internal/app"
 	m "github.com/drewkarpov/go_nhl/internal/models"
-	"go.mongodb.org/mongo-driver/bson"
 	"net/http"
-	"time"
 )
 
 type StatisticHandler struct {
@@ -16,19 +13,17 @@ type StatisticHandler struct {
 
 func (handler *StatisticHandler) GetStatistic(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
-	ctx, _ := context.WithTimeout(context.Background(), 15*time.Second)
-	var statistic = m.Statistic{0, 0, 0, 0, 0}
-	cursor, err := handler.Application.Db.Collection.Find(ctx, bson.M{})
+
+	players, err := handler.Application.PlayerService.GetAllPlayers()
 	if err != nil {
 		writeErrorToResponse(response, err)
 		return
 	}
-	defer cursor.Close(ctx)
-	for cursor.Next(ctx) {
-		var player m.Player
-		cursor.Decode(&player)
+	var statistic = m.Statistic{}
+
+	for index := range players {
 		statistic.Total++
-		switch player.Status {
+		switch players[index].Status {
 		case "zero":
 			statistic.Zero++
 		case "low":
@@ -38,10 +33,6 @@ func (handler *StatisticHandler) GetStatistic(response http.ResponseWriter, requ
 		case "driver":
 			statistic.Driver++
 		}
-	}
-	if err := cursor.Err(); err != nil {
-		writeErrorToResponse(response, err)
-		return
 	}
 	json.NewEncoder(response).Encode(statistic)
 	handler.LoggingRequest(*request, 200)

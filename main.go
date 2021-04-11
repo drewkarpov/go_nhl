@@ -1,9 +1,8 @@
 package main
 
 import (
-	a "github.com/drewkarpov/go_nhl/app"
+	a "github.com/drewkarpov/go_nhl/internal/app"
 	h "github.com/drewkarpov/go_nhl/internal/handler"
-	d "github.com/drewkarpov/go_nhl/internal/mongo"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"os"
@@ -14,8 +13,6 @@ func main() {
 	logger.SetOutput(os.Stdout)
 
 	var application a.Application
-	var db d.DbWrapper
-	db = db.Init()
 
 	statHandler := h.StatisticHandler{Application: &application}
 	playerHandler := h.PlayerHandler{Application: &application}
@@ -29,7 +26,7 @@ func main() {
 	router.HandleFunc("/player/{id}/delete", playerHandler.DeletePlayer).Methods("DELETE")
 	router.HandleFunc("/players/statistic", statHandler.GetStatistic).Methods("GET")
 
-	application = application.Setup(logger, db, *router)
+	application = application.Setup(logger, *router)
 	application.Run()
 
 }

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/drewkarpov/go_nhl/internal/interfaces"
 	d "github.com/drewkarpov/go_nhl/internal/mongo"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -8,19 +9,22 @@ import (
 )
 
 type Application struct {
-	Server    http.Server
-	Db        d.DbWrapper
-	AppConfig AppConfig
-	Logger    *logrus.Logger
+	Server        http.Server
+	PlayerService interfaces.PlayerService
+	AppConfig     AppConfig
+	Logger        *logrus.Logger
 }
 
 type AppConfig struct {
 	Router mux.Router
 }
 
-func (a *Application) Setup(logger *logrus.Logger, database d.DbWrapper, router mux.Router) Application {
+func (a *Application) Setup(logger *logrus.Logger, router mux.Router) Application {
 	a.AppConfig = AppConfig{Router: router}
-	return Application{Db: database, AppConfig: a.AppConfig, Logger: logger}
+	var service d.MongoPlayerService
+	service = service.Init()
+
+	return Application{PlayerService: service, AppConfig: a.AppConfig, Logger: logger}
 }
 
 func (app *Application) Run() {

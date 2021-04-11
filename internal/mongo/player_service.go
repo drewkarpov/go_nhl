@@ -99,6 +99,8 @@ func (d MongoPlayerService) AddGameToPlayer(id primitive.ObjectID, game m.Game) 
 }
 
 func (d MongoPlayerService) GetPlayerGames(id primitive.ObjectID) ([]m.Game, error) {
-	player, err := d.GetPlayerById(id)
+	ctx, _ := context.WithTimeout(context.Background(), 40*time.Second)
+	var player m.Player
+	err := d.Collection.FindOne(ctx, bson.M{"_id": id}).Decode(&player)
 	return player.Games, err
 }

@@ -9,7 +9,7 @@ type Player struct {
 	Priority  int                `json:"priority" priority:"status"`
 	Comment   string             `json:"comment" bson:"comment"`
 	Timestamp int64              `json:"timestamp" bson:"timestamp"`
-	Games     []Game             `json:"games" bson:"games"`
+	Games     []Game             `json:"games,omitempty" bson:"games,omitempty"`
 }
 
 type PlayerDTO struct {

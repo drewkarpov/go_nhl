@@ -20,7 +20,7 @@ func (d MongoPlayerService) Init() MongoPlayerService {
 	ctx, _ := context.WithTimeout(context.Background(), 40*time.Second)
 	var cred options.Credential = options.Credential{Username: os.Getenv("MONGODB_USER"),
 		Password: os.Getenv("MONGODB_PWD")}
-	client, _ := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017").SetAuth(cred))
+	client, _ := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://mongo:27017").SetAuth(cred))
 	d.Collection = client.Database("nhl").Collection("players")
 	return MongoPlayerService{Collection: d.Collection}
 }

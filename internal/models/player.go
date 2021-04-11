@@ -30,4 +30,5 @@ type Game struct {
 	Score      string             `json:"score" bson:"score"`
 	IsWin      bool               `json:"is_win" bson:"is_win"`
 	IsOvertime bool               `json:"is_overtime" bson:"is_overtime"`
+	Timestamp  int64              `json:"timestamp" bson:"timestamp"`
 }

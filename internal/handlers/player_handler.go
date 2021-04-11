@@ -124,6 +124,9 @@ func (handler PlayerHandler) GetPlayerGames(response http.ResponseWriter, reques
 		writeErrorToResponse(response, err)
 		return
 	}
+	sort.Slice(games, func(i, j int) bool {
+		return games[i].Timestamp > games[j].Timestamp
+	})
 	json.NewEncoder(response).Encode(&games)
 	handler.Application.Logger.Infof("get response %v", request.RequestURI)
 }

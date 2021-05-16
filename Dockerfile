@@ -2,7 +2,7 @@ FROM golang:alpine AS builder
 
 WORKDIR $GOPATH/src/mypackage/myapp/
 COPY . .
-RUN go get -d -v
-RUN go build
+RUN cd cmd && go get -d -v
+RUN go build ./cmd/main.go
 
 ENTRYPOINT ["./go_nhl"]

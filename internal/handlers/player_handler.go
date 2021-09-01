@@ -21,7 +21,6 @@ type Result struct {
 
 func (handler PlayerHandler) CreatePlayer(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
-
 	var player m.PlayerDTO
 	json.NewDecoder(request.Body).Decode(&player)
 	player.Timestamp = time.Now().Unix()
@@ -33,7 +32,7 @@ func (handler PlayerHandler) CreatePlayer(response http.ResponseWriter, request 
 
 func (handler PlayerHandler) GetPlayers(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
-
+	response.Header().Add("Access-Control-Allow-Origin", "*")
 	var players, err = handler.Application.PlayerService.GetAllPlayers()
 	if err != nil {
 		writeErrorToResponse(response, err)

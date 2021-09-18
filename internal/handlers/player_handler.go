@@ -30,6 +30,22 @@ func (handler PlayerHandler) CreatePlayer(response http.ResponseWriter, request 
 	handler.Application.Logger.Infof("get response %v", request.RequestURI)
 }
 
+func (handler PlayerHandler) CreatePlayers(response http.ResponseWriter, request *http.Request) {
+	response.Header().Add("content-type", "application/json")
+	var players []m.PlayerDTO
+	var results []m.PlayerIsWritingResponse
+	json.NewDecoder(request.Body).Decode(&players)
+
+	for _, player := range players {
+		player.Timestamp = time.Now().Unix()
+		result := handler.Application.PlayerService.WritePlayer(player)
+		results = append(results, result)
+	}
+
+	json.NewEncoder(response).Encode(results)
+	handler.Application.Logger.Infof("get response %v", request.RequestURI)
+}
+
 func (handler PlayerHandler) GetPlayers(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 	response.Header().Add("Access-Control-Allow-Origin", "*")

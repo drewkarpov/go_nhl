@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"context"
+	"fmt"
 	m "github.com/drewkarpov/go_nhl/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -25,7 +26,7 @@ func (d MongoPlayerService) Init() MongoPlayerService {
 	return MongoPlayerService{Collection: d.Collection}
 }
 
-func (d MongoPlayerService) WritePlayer(playerDTO m.PlayerDTO) *mongo.InsertOneResult {
+func (d MongoPlayerService) WritePlayer(playerDTO m.PlayerDTO) m.PlayerIsWritingResponse {
 	player := playerDTO.MapToPlayer()
 	player.ID = primitive.NewObjectID()
 	player.Games = []m.Game{}
@@ -33,8 +34,9 @@ func (d MongoPlayerService) WritePlayer(playerDTO m.PlayerDTO) *mongo.InsertOneR
 	result, err := d.Collection.InsertOne(ctx, player)
 	if err != nil {
 		log.Fatal(err)
+		return m.PlayerIsWritingResponse{ID: "nil", Name: player.Name, IsAdded: false}
 	}
-	return result
+	return m.PlayerIsWritingResponse{ID: fmt.Sprintf("%v", result.InsertedID), Name: player.Name, IsAdded: true}
 }
 
 func (d MongoPlayerService) GetAllPlayers() ([]m.Player, error) {

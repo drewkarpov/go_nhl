@@ -21,6 +21,12 @@ type PlayerDTO struct {
 	Games     []Game
 }
 
+type PlayerIsWritingResponse struct {
+	ID      string `json:"_id" bson:"_id"`
+	Name    string `json:"name" bson:"name"`
+	IsAdded bool   `json:"is_added" bson:"is_added"`
+}
+
 func (p PlayerDTO) MapToPlayer() Player {
 	return Player{Name: p.Name, Status: p.Status, Priority: p.Priority, Comment: p.Comment, Timestamp: p.Timestamp, Games: p.Games}
 }
